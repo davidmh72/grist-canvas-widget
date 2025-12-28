@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 
 // --- CONFIGURATION ---
-const WIDGET_VERSION = "v13.0 - CSS Grid (Clean)";
+const WIDGET_VERSION = "v14.0 - CSS Grid (Clean)";
 const TABLE_ID = 'SysDashboard_Config'; 
 
 // --- ERROR BOUNDARY ---
