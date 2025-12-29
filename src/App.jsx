@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 // --- CONFIGURATION ---
-const WIDGET_VERSION = "v18.0 - Instant Auto-Jump";
+const WIDGET_VERSION = "v1.0";
 const MAGIC_STOP_WORD = "EDIT"; // Set the Label to this to prevent jumping
 
 // --- ERROR BOUNDARY ---
