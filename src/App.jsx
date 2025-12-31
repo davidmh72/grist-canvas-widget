@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 // --- CONFIGURATION ---
-const WIDGET_VERSION = "v2.2";
+const WIDGET_VERSION = "v2.3";
 
 // --- INITIALIZATION ---
 console.log(`Grist Canvas Widget ${WIDGET_VERSION} loaded.`);
@@ -38,7 +38,12 @@ function Dashboard() {
       return;
     }
 
-    grist.ready();
+    grist.ready({
+      // Tell Grist which columns we need. This ensures the widget receives
+      // the correct data regardless of which table is currently active.
+      columns: ['X', 'Y', 'W', 'H', 'Label', 'Link', 'Color', 'Type', 'Pages'],
+      requiredAccess: 'full'
+    });
 
     grist.onRecords((records) => {
       console.log("Received records from Grist:", records);
@@ -99,16 +104,9 @@ function Element({ item }) {
 
 // --- MENU ELEMENT ---
 function MenuElement({ item }) {
-  // This function handles the navigation when a menu item is clicked.
-  const handleNavigate = (pageName) => {
-    // Construct the new URL. This replaces the hash part of the URL.
-    const newUrl = new URL(window.top.location.href);
-    newUrl.hash = `p=${encodeURIComponent(pageName)}`;
-
-    // Use the History API to navigate without a full page reload for a smoother experience.
-    window.top.history.pushState(null, '', newUrl.href);
-    window.top.dispatchEvent(new PopStateEvent('popstate'));
-  };
+  // The 'pages' data from Grist is a list where the first element is the table name
+  // and the second element is the list of records.
+  const pageRecords = Array.isArray(item.pages) && item.pages.length > 1 ? item.pages[1] : [];
 
   return (
     <div
@@ -122,17 +120,18 @@ function MenuElement({ item }) {
         background: item.bgColor,
         boxSizing: 'border-box',
         padding: '5px',
-        overflowY: 'auto', // Add scroll if content overflows
+        overflowY: 'auto',
       }}
     >
       <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-        {item.pages[1].map(page => (
+        {pageRecords.map(page => (
           <li key={page.id} style={{ marginBottom: '5px' }}>
             <a
               href="#"
               onClick={(e) => {
                 e.preventDefault();
-                handleNavigate(page.fields.page_name);
+                // Construct the internal Grist page link and pass to the handler
+                handleNavigate(`#p=${encodeURIComponent(page.fields.page_name)}`);
               }}
               style={{
                 textDecoration: 'none',
@@ -150,14 +149,35 @@ function MenuElement({ item }) {
 }
 
 
+// --- NAVIGATION HANDLER ---
+// A single function to handle all navigation. It can handle both internal Grist
+// page links (hashes) and full external URLs.
+const handleNavigate = (url) => {
+  if (!url) return;
+
+  // If it's an internal Grist page link (starts with #), use the History API.
+  if (url.startsWith('#')) {
+    const newUrl = new URL(window.top.location.href);
+    newUrl.hash = url.substring(1); // Remove the leading '#'
+    window.top.history.pushState(null, '', newUrl.href);
+    window.top.dispatchEvent(new PopStateEvent('popstate'));
+  } else {
+    // For full URLs, just navigate the top-level window.
+    window.top.location.href = url;
+  }
+};
+
+
 // --- DEFAULT ELEMENT ---
-// This component handles the rendering for standard labels, buttons, etc.
+// This component now uses the handleNavigate function for same-tab navigation.
 function DefaultElement({ item }) {
   return (
     <a
       href={item.link || '#'}
-      target="_blank"
-      rel="noopener noreferrer"
+      onClick={(e) => {
+        e.preventDefault(); // Prevent the default link behavior
+        handleNavigate(item.link);
+      }}
       style={{
         position: 'absolute',
         left: `${item.x * 20}px`,
