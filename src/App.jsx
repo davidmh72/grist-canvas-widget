@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 // --- CONFIGURATION ---
-const WIDGET_VERSION = "v2.8-final-menu-fix";
+const WIDGET_VERSION = "v2.9";
 
 // --- INITIALIZATION ---
 console.log(`Grist Canvas Widget ${WIDGET_VERSION} loaded.`);
